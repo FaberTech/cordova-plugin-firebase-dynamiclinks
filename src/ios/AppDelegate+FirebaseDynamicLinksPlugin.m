@@ -42,13 +42,27 @@
             openURL:(NSURL *)url
   sourceApplication:(NSString *)sourceApplication
          annotation:(id)annotation {
-  FIRDynamicLink *dynamicLink = [[FIRDynamicLinks dynamicLinks] dynamicLinkFromCustomSchemeURL:url];
+  
   FirebaseDynamicLinksPlugin* dl = [self.viewController getCommandInstance:@"FirebaseDynamicLinks"];
-  if (dynamicLink) {
-    [dl postDynamicLink:dynamicLink];
-    return YES;
-  }
-  return NO;
+  BOOL handled = [[FIRDynamicLinks dynamicLinks]
+        handleUniversalLink:url
+        completion:^(FIRDynamicLink * _Nullable dynamicLink, NSError * _Nullable error) {
+            if (dynamicLink) {
+                [dl postDynamicLink:dynamicLink];
+            }
+            else {
+              FIRDynamicLink *dynamicLink2 = [[FIRDynamicLinks dynamicLinks] dynamicLinkFromCustomSchemeURL:url];
+              if (dynamicLink2) {
+                [dl postDynamicLink:dynamicLink2];
+              }
+            }
+        }];
+
+    if (handled) {
+        return YES;
+    }
+
+    return NO;
 }
 
 

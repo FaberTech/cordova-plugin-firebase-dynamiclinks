@@ -5,17 +5,10 @@
 
 @implementation AppDelegate (FirebaseDynamicLinksPlugin)
 
-+ (void)load {
-    method_exchangeImplementations(
-        class_getInstanceMethod(self, @selector(application:continueUserActivity:restorationHandler:)),
-        class_getInstanceMethod(self, @selector(identity_application:continueUserActivity:restorationHandler:))
-    );
-}
-
 // [START continueuseractivity]
-- (BOOL)identity_application:(UIApplication *)application
+- (BOOL)application:(UIApplication *)application
         continueUserActivity:(NSUserActivity *)userActivity
-          restorationHandler:(void (^)(NSArray *))restorationHandler {
+          restorationHandler:(void (^)(NSArray * _Nullable))restorationHandler {
     FirebaseDynamicLinksPlugin* dl = [self.viewController getCommandInstance:@"FirebaseDynamicLinks"];
 
     BOOL handled = [[FIRDynamicLinks dynamicLinks]
@@ -30,10 +23,33 @@
         return YES;
     }
 
-    return [self identity_application:application
-                 continueUserActivity:userActivity
-                   restorationHandler:restorationHandler];
+    return NO;
 }
 // [END continueuseractivity]
+
+
+
+- (BOOL)application:(UIApplication *)application
+            openURL:(NSURL *)url
+            options:(NSDictionary<NSString *, id> *)options {
+  return [self application:application
+                   openURL:url
+         sourceApplication:options[UIApplicationOpenURLOptionsSourceApplicationKey]
+                annotation:options[UIApplicationOpenURLOptionsAnnotationKey]];
+}
+
+- (BOOL)application:(UIApplication *)application
+            openURL:(NSURL *)url
+  sourceApplication:(NSString *)sourceApplication
+         annotation:(id)annotation {
+  FIRDynamicLink *dynamicLink = [[FIRDynamicLinks dynamicLinks] dynamicLinkFromCustomSchemeURL:url];
+  FirebaseDynamicLinksPlugin* dl = [self.viewController getCommandInstance:@"FirebaseDynamicLinks"];
+  if (dynamicLink) {
+    [dl postDynamicLink:dynamicLink];
+    return YES;
+  }
+  return NO;
+}
+
 
 @end
